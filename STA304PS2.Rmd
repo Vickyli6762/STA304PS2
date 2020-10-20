@@ -1,0 +1,183 @@
+---
+title: "STA304PS2"
+author: "FeiYang1004847696, JunwenYuan1004136696, YuxinLi1002330998, RuoqiuyanZhang1003926718"
+date: "19/10/2020"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+
+```
+
+## STA304PS2
+
+#FeiYang 1004847696
+
+#JunwenYuan 1004136696
+
+#RuoqiuyanZhang 1003926718
+
+#YuxinLi 1002330998
+
+
+# 19/10/2020
+
+## Abstract
+
+The purpose of this article is to examine the probability of the female above 19-year-old will divorce and what is the influence factor for that in Canada by using 2017 GSS (General Social Survey) dataset. We apply setting up a multinomial logit model to analyze the main influence factor of divorcing.There are four main factors that influence the devorce rate emerged from the analysis. Only the total number of children have a positive relationship with the divorce rate. Family income level, partner’s education level and income respondent has a negative relationship with the divorce rate. Associated with much of the common sense , divorce rates are always related to income, children and education.
+
+
+## Introduction
+The word "marriage" represents happiness in most people's lives, but in the modern era, it becomes closer to divorce than any time in the past. The rate of divorce has been increasing and the average marriage time only lasts seven years. Approximately, 38% of all Canadian marriages end in divorce, and there is a trend that newer marriages have a higher divorce rate (1). According to Statistics Canada, Divorce rates by year of marriage, Canadians getting married in 2001 have the highest divorce rate, which is 26.08 per 1,000 marriages (2). The potential reasons and underlying factors regarding this shocking but intriguing data is worth analyzing. As a result, the goal of this analysis is to find potential reasons for the trend of increasing in divorce rate in Canada and predict divorce rate in the future when taking account of those factors. The study will be focusing on statistical analysis of the dataset: Canadian General Social Survey (GSS), and models will be built for data to be analyzed.
+
+
+
+## Data
+
+Our data is based on the 2017 Canadian General Social Survey(GSS) including 19 years of age and older in Canada. The purpose of this data collection is to gather information for the specific social policy issues at present or preparing for  the future. And it is more convenient to observe how the living conditions and well-being change among Canadians over time. The sample data was collected by groups of provinces during 9.00 am. to 9.30 pm. Mondays to Fridays. And the sample size is 20,000. And there are many Census Metropolitan Areas (CMAs) that were divided into Alberta, British Columbia, Manitoba, New Brunswick, Newfoundland and Labrador, Nova scotia, Ontario, Prince Edward Island, Quebec and Saskatchewan. 
+The method of collecting data uses a new frame by survey via telephone. The advantages of this methodology are that it is impossible to collect sample data by face-to face interview via ten provinces. And telephone calls save time to reach people who are 19 years of age and older separately in ten provinces. However, the drawbacks might be existing outliers that people might skip the questions or refusing to answer the call. In order to cover all households with telephone numbers, the non-response are also included in the frame.
+
+
+## Model
+
+We used logistic regression model to find whether there exsiting the correlation between once divorced women and several predictor variables $( \beta_1 X_{tc,i}$,  $\beta_2X_{if,i}$, $\beta_3X_{ir,i}$, $\beta_4X_{pe,i}$). p is the probability of the once divorced women occurring.
+
+$$
+\log\frac{p_i}{1-p_i} = \beta_0 + \beta_1 X_{tc,i} + \beta_2X_{if,i}+ \beta_3X_{ir,i} + \beta_4X_{pe,i}+ \epsilon_i
+$$
+
+
+$X_{tc,i}$ is a variable that the number of children women have.
+
+$X_{if,i}$ is the family income.There are four levels including 125,000 and more, 25,000 to 49,999, 50,000 to 74,999, 75,000 to 99,999. 
+
+$X_{ir,i}$ is the income respondent. There are 125,000 and more, 25,000 to 49,999, 50,000 to 74,999, 75,000 to 99,999, Less than 25,000.
+
+$X_{pe,i}$ is the level of partner education. There are five levels, college,CEGEP or other no-university certificate or diploma, High school diploma or high school equivalency certification, less than high school diploma or its equivalent, University certificate or diploma below bachelor's level, University certificate,diploma or degree above the bachelor's level. 
+
+
+
+## Code
+
+```{r, echo=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(knitr)
+data <- read.csv("~/Downloads/gss.csv")
+#all canadian women who's over 19 and has once divorced
+once_divorced_f<-data %>% mutate(data, once_divorced=((age>=19)&(sex== "Female") &(marital_status=="Divorced")|(marital_status=="Married"&current_marriage_is_first=="No"))) %>% mutate(data, booleandivorced=ifelse(once_divorced=="TRUE",1,0))
+
+#to see how large is the dataset, just for convenience of the following step
+#once_divorced_f %>% filter(booleandivorced==1)
+#once divored is 1 and never divored after entering a marriage is 0
+
+#put all variable that I think would be correlated in to the logit, but it doesn't work
+mylogit<-glm(booleandivorced~age+age_first_child+total_children+age_start_relationship+age_at_first_marriage+age_at_first_birth+age_youngest_child_returned_work+as.factor(own_rent)+as.factor(partner_education)+as.factor(average_hours_worked)+as.factor(income_family)+as.factor(income_respondent)+as.factor(children_in_household)+as.factor(full_part_time_work), data=once_divorced_f, family="binomial" )
+
+#try these variables to see if their p value is small enough to be in the model
+mylogit<-mylogit<-glm(booleandivorced~age+age_first_child+total_children,data=once_divorced_f, family="binomial" )
+#total children,p=6.18e-16
+mylogit<-mylogit<-glm(booleandivorced~age_start_relationship+age_at_first_marriage+age_at_first_birth,data=once_divorced_f, family="binomial" )
+#none
+mylogit<-glm(booleandivorced~age_youngest_child_returned_work+as.factor(own_rent),data=once_divorced_f, family="binomial" )
+#age_youngest_child_returned_work，p=0.353
+mylogit<-glm(booleandivorced~as.factor(partner_education)+as.factor(average_hours_worked),data=once_divorced_f, family="binomial" )
+#education, if lower or equal to high school, then p value is small
+mylogit<-glm(booleandivorced~as.factor(income_family)+as.factor(income_respondent),data=once_divorced_f, family="binomial" )
+#income of family, and respondent
+mylogit<-glm(booleandivorced~as.factor(children_in_household)+as.factor(full_part_time_work),data=once_divorced_f, family="binomial" )
+#none
+```
+
+
+Here is the summary that indicates all the correlational relationship between the possibility of once divorced and other chosen variables for Canadian women who are older than 19 years old in 2017 GSS data.
+```{r, echo= FALSE}
+
+#put all chosen variables in
+mylogit<-glm(booleandivorced~total_children+age_youngest_child_returned_work+partner_education+income_family+income_respondent,data=once_divorced_f, family="binomial" )
+# summary(mylogit) it's necessary step, but we need to comment it after running this to avoid it appears in the result, please run it if you want to repeat the result
+#p value of age_youngest_child_returned_work is too great, let's eliminate it
+mylogit<-glm(booleandivorced~total_children+partner_education+income_family+income_respondent,data=once_divorced_f, family="binomial" )
+summary(mylogit)
+```
+
+
+Here is the summary that indicates all the correlational relationship between the possibility of once divorced and other chosen variables for Canadian women who are between 19 and 45 years old and receive university edcation and in 2017 GSS data excluding these whose partner's education is "Trade certificate or diploma" and family income is below 25000 dollar per year.
+```{r, echo= FALSE}
+#age 19-45, with an education of bechelor's degree, wheather they are once divorced
+once_divorced_f_future_us<-data %>% mutate(data, once_divorced=((education=="Bachelor\'s degree (e.g. B.A., B.Sc., LL.B.)")&(age>=19)&(age<=45)&(sex== "Female") &(marital_status=="Divorced")|(marital_status=="Married"&current_marriage_is_first=="No"))) %>% mutate(data, booleandivorced=ifelse(once_divorced=="TRUE",1,0))
+
+
+future_us_logit<-glm(booleandivorced~total_children+age_youngest_child_returned_work+partner_education+income_family+income_respondent,data=once_divorced_f_future_us, family="binomial" )
+#summary(future_us_logit) it's necessary step, but we need to comment it after running this to avoid it appears in the result, please run it if you want to repeat the result
+##sd is too large for these whose partner's education is "Trade certificate or diploma"" and family whose income is "less than 25000"",so let's elimiate it
+once_divorced_f_future_us<-once_divorced_f_future_us %>% filter(partner_education!="Trade certificate or diploma") %>% filter(income_family!="Less than $25,000")
+
+future_us_logit<-glm(booleandivorced~total_children+age_youngest_child_returned_work+partner_education+income_family+income_respondent,data=once_divorced_f_future_us, family="binomial" )
+
+summary(future_us_logit)
+```
+
+## Results
+
+```{r, echo= FALSE}
+
+once_divorced_f %>%filter(booleandivorced==1) %>% ggplot(aes(income_family)) + geom_bar() + labs(title = "Income Family", tag = "Figure 1")+ theme(axis.text.x=element_text(angle=-25, hjust= .1))
+once_divorced_f %>%filter(booleandivorced==1) %>% ggplot(aes(income_respondent)) + geom_bar() +labs(title = "Income Respondent", tag = "Figure 2")+ theme(axis.text.x=element_text(angle=-25, hjust= .1))
+once_divorced_f %>%filter(booleandivorced==1) %>% ggplot(aes(partner_education)) + geom_bar()+ theme(axis.text.x=element_text(angle=-25, hjust= .1)) + labs(title = "Partner Education Level", tag = "Figure 3")
+once_divorced_f %>% filter(booleandivorced==1) %>%ggplot(aes(y=age)) + geom_boxplot() + labs(title = "Age", tag = "Figure 4")
+```
+
+
+
+  Based on the summary of  generalized linear models,  we can find the relationship between once_divorced and other predictor variables. The coefficients of a logistic regression analysis represent the change in log odds. 
+  From the summary, the probability of women who were divorced has a positive relationship with the number of children women had, which means every additional unit increase in total_children we expect the log odds of being divorced to increase 0.37618. 
+  In addition, from summary, it shows there is positive correlation between the divorced rate and the partner educational level.And it was shown in Figure 3 as well, there is smallest count number in the level of university certificate or diploma and above.
+  In addition, it shows positive correlation between family income and divorced rate. And there is a negative correlation between divorved rate and family income from 75,000 to 99,999. Moreover, in Figure shown, there is a negative relationship between income respondent and divorced rate. 
+
+
+
+
+
+## Discussion
+
+  The investigation of potential factors that would contribute to the increasing divorce rate remains critical for people to face this social phenomenon. From the results of our study, there is a positive correlation between the number of total children and the probability of women getting divorced. The study in 1991 has shown that having children is not always a beneficial factor for the stability of the marriage (3). One empirical study had data evidence proved that, the greater the number of children, the more stable is the marriage. However, the greater number of children would also diminish marginal effects, which has limitations and beyond the limitation, the stability of marriage would decrease (4). This conclusion generally fits our analysis between the probability of women divorced and the factor of number of total children.
+
+  Our study also showed that, with the increase in the partner’s education level, the probability that the couple getting divorced would decrease, with the exception of education level less than high school diploma. One’s education level can somewhat determine his or her choice of occupation and social surroundings, which also specifically include how he or she would treat a marriage. Additionally, there are studies indicating that the gender gap in education was associated with changes in relative divorce risks, and larger that gap, the greater risks of divorce (5). Those revealed that education level plays a key role in the stability of a marriage. 
+
+  Family income is also positively related to the probability of women getting divorced. The exception that families with income greater than $125,000 do not need to worry about divorce considering income as a factor. This indicates that these marriages exist for more complex reasons, so if this part of data are to be analyzed, additional factors need to be taken into account. 
+
+
+# Weaknesses
+
+  The purpose of this study is to analyze the influence factor of the divorce rate of the female whose age is between 19 and 45. However we have eliminated two of the factors, trade certification in partner education and household income under 25,000. Since, the standard deviation of these two factors are too large that may cause by outliers. Although this step excludes the potential unrelated factors, it reduces this report’s reference value.  Also, this study of female divore rate are only using the dataset from 2017, so it may leads to the results inaccurate. For example, the COVID-19 attacks the income of average people violently this year.
+
+
+# Next Steps
+
+  To improve the report result, we may add the factor of trade certification in partner education and household income under 25,000. First, by grouping a boxplot, we could find the standard deviation of these factors. If outliers exist, we should exclude the data of these outliers, then these two factors can be analyzed with divorced rate. Also, we should not only use the data from one year. Instead of current work, there should be data from other years engaged in the report, or we may release a survey that could ask people if there is any influence sector that makes this year’s data different from other years.
+
+
+
+
+## References
+
+1. NetNewsLedger. “Highest and Lowest Canadian Divorce Rates By Profession.” NetNewsLedger, 6 Sept. 2020, www.netnewsledger.com/2019/06/20/highest-and-lowest-canadian-divorce-rates-by-profession/. 
+2. Statistics Canada. “Divorce Rates, by Year of Marriage.” Statistics Canada, 17 Oct. 2020, www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3910002801&amp;pickMembers%5B0%5D=1.1.
+3. Waite, Linda J., and Lee A. Lillard. “Children and Marital Disruption.” American Journal of Sociology, vol. 96, no. 4, 1991, pp. 930–953. JSTOR, www.jstor.org/stable/2780736. Accessed 19 Oct. 2020.
+4. Xu, Qi, Jianning Yu, and Zeqi Qiu. "The Impact of Children on Divorce Risk." The Journal of Chinese Sociology, vol. 2, no. 1, 2015, pp. 1-20. ProQuest, http://myaccess.library.utoronto.ca/login?qurl=https%3A%2F%2Fwww.proquest.com%2Fdocview%2F1987973988%3Faccountid%3D14771, doi:http://dx.doi.org.myaccess.library.utoronto.ca/10.1186/s40711-015-0003-0.
+5. Grow, André, Christine Schnor, and Jan Van Bavel. "The Reversal of the Gender Gap in Education and Relative Divorce Risks: A Matter of Alternatives in Partner Choice?" Population Studies, vol. 71, 2017, pp. 15-34. ProQuest, http://myaccess.library.utoronto.ca/login?qurl=https%3A%2F%2Fwww.proquest.com%2Fdocview%2F1954947522%3Faccountid%3D14771, doi:http://dx.doi.org.myaccess.library.utoronto.ca/10.1080/00324728.2017.1371477.
+
+6. GitHub, https://github.com/
+
+7. Dataset: General Social Survey, Cycle 31: 2017: Family
+
+
+
